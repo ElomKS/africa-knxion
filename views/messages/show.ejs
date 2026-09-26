@@ -1,0 +1,30 @@
+<%- include('../partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <a href="/messages" class="link">&larr; All conversations</a>
+    <h1><%= other.full_name %></h1>
+    <p><%= other.profession || 'Member' %> &middot; <%= formatLocation(other) || 'US-wide' %></p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container container-narrow">
+    <div class="card chat-card">
+      <div class="chat-thread">
+        <% messages.forEach(function (m) { %>
+          <div class="chat-line <%= m.sender_id === user.id ? 'chat-me' : 'chat-them' %>">
+            <div class="chat-bubble"><%= m.body %></div>
+            <span class="muted chat-time"><%= m.created_at %></span>
+          </div>
+        <% }) %>
+      </div>
+      <form action="/messages/<%= conv.id %>" method="POST" class="chat-form">
+        <input type="text" name="body" placeholder="Write a message&hellip;" autocomplete="off" required>
+        <button class="btn btn-primary" type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

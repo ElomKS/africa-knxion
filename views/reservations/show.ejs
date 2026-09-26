@@ -1,0 +1,64 @@
+<%- include('../partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <a href="/account#bookings" class="link">&larr; Back to my bookings</a>
+    <h1>Booking</h1>
+    <p><%= reservation.offer_title %></p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container container-narrow">
+    <div class="panel">
+      <h3>Reservation details</h3>
+      <p>
+        <strong>Service:</strong> <%= reservation.offer_title %><br>
+        <strong>Requested by:</strong> <a href="/profiles/<%= reservation.client_id %>"><%= reservation.client_name %></a>
+        <% if (reservation.client_profession) { %>(<%= reservation.client_profession %>)<% } %><br>
+        <strong>Status:</strong>
+        <span class="status-badge status-<%= reservation.status %>"><%= reservation.status %></span>
+      </p>
+      <% if (reservation.message) { %>
+        <p><strong>Message:</strong></p>
+        <div class="chat-bubble"><%= reservation.message %></div>
+      <% } %>
+    </div>
+
+    <div class="panel">
+      <h3>Actions</h3>
+      <% if (reservation.status === 'pending') { %>
+        <% if (user && (user.role === 'admin' || reservation.offer_owner === user.id)) { %>
+          <form action="/reservations/<%= reservation.id %>/status" method="POST" class="inline-actions">
+            <input type="hidden" name="status" value="accepted">
+            <button class="btn btn-primary">Accept</button>
+          </form>
+          <form action="/reservations/<%= reservation.id %>/status" method="POST" class="inline-actions">
+            <input type="hidden" name="status" value="declined">
+            <button class="btn btn-danger">Decline</button>
+          </form>
+        <% } else if (user && reservation.client_id === user.id) { %>
+          <form action="/reservations/<%= reservation.id %>/status" method="POST" class="inline-actions">
+            <input type="hidden" name="status" value="cancelled">
+            <button class="btn btn-outline">Cancel booking</button>
+          </form>
+        <% } %>
+      <% } else if (reservation.status === 'accepted') { %>
+        <% if (user && (user.role === 'admin' || reservation.offer_owner === user.id)) { %>
+          <form action="/reservations/<%= reservation.id %>/status" method="POST" class="inline-actions">
+            <input type="hidden" name="status" value="completed">
+            <button class="btn btn-primary">Mark as completed</button>
+          </form>
+        <% } else if (user && reservation.client_id === user.id) { %>
+          <form action="/reservations/<%= reservation.id %>/status" method="POST" class="inline-actions">
+            <input type="hidden" name="status" value="cancelled">
+            <button class="btn btn-outline">Cancel booking</button>
+          </form>
+        <% } %>
+      <% } %>
+      <p class="muted"><a href="/messages/start/<%= (reservation.offer_owner === user.id) ? reservation.client_id : reservation.offer_owner %>">Message the other party</a> to arrange details.</p>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

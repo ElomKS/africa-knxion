@@ -1,0 +1,34 @@
+<%- include('../partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <a href="/services/<%= offer.id %>" class="link">&larr; Back to offer</a>
+    <h1>Book this service</h1>
+    <p>Send a booking request to <%= offer.full_name %>.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container container-narrow">
+    <div class="panel">
+      <h2><%= offer.title %></h2>
+      <p class="muted">
+        <span class="card-tag"><%= offer.category || 'General' %></span>
+        <span>&#128205; <%= formatLocation(offer) || 'US-wide' %></span><br>
+        <strong>Price:</strong> <%= offer.price || 'Contact for price' %>
+      </p>
+    </div>
+    <form action="/services/<%= offer.id %>/book" method="POST" class="card form-card">
+      <div class="form-group">
+        <label for="message">Message to <%= offer.full_name %></label>
+        <textarea id="message" name="message" rows="5" placeholder="Tell them what you need, when, and how to reach you&hellip;"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Send booking request</button>
+        <a href="/services/<%= offer.id %>" class="btn btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

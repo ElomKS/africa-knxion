@@ -1,0 +1,37 @@
+<%- include('partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <h1>Messages</h1>
+    <p>Chat with members about their services and your needs.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container container-narrow">
+    <% if (conversations.length === 0) { %>
+      <div class="panel center">
+        <p>No conversations yet.</p>
+        <p class="muted">Browse the <a href="/directory">directory</a> and send a member a message.</p>
+      </div>
+    <% } else { %>
+      <div class="card list">
+        <% conversations.forEach(function (c) { %>
+          <% var otherName = (c.user_a === user.id) ? c.b_name : c.a_name; %>
+          <a class="list-item" href="/messages/<%= c.id %>">
+            <span class="avatar"><%= otherName.charAt(0) %></span>
+            <div>
+              <strong><%= otherName %></strong>
+              <span class="muted"><%= c.last_message || 'Say hello' %></span>
+            </div>
+            <% if (c.unread > 0) { %>
+              <span class="badge"><%= c.unread %></span>
+            <% } %>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

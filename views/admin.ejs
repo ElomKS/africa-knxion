@@ -1,0 +1,156 @@
+<%- include('partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <h1>Admin dashboard</h1>
+    <p>Overview and management of the Africa KNXION community.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="grid grid-5">
+      <div class="stat-card">
+        <span class="stat-number"><%= stats.users %></span>
+        <span class="stat-label">Members</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number"><%= stats.activeUsers %></span>
+        <span class="stat-label">Active members</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number"><%= stats.offers %></span>
+        <span class="stat-label">Service offers</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number"><%= stats.requests %></span>
+        <span class="stat-label">Requests</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number"><%= stats.openRequests %></span>
+        <span class="stat-label">Open requests</span>
+      </div>
+    </div>
+
+    <div class="grid grid-5">
+      <div class="stat-card">
+        <span class="stat-number"><%= stats.reviews %></span>
+        <span class="stat-label">Reviews</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number"><%= stats.reservations %></span>
+        <span class="stat-label">Bookings</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number"><%= stats.pendingReservations %></span>
+        <span class="stat-label">Pending bookings</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number"><%= stats.conversations %></span>
+        <span class="stat-label">Conversations</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number"><%= stats.statesCovered %></span>
+        <span class="stat-label">States covered</span>
+      </div>
+    </div>
+
+    <div class="panel admin-tools">
+      <h2>Management</h2>
+      <div class="tool-links">
+        <a href="/admin/messages" class="btn btn-outline">Contact messages</a>
+        <a href="/admin/reviews" class="btn btn-outline">Moderate reviews</a>
+        <a href="/services" class="btn btn-outline">Manage offers</a>
+        <a href="/requests" class="btn btn-outline">Manage requests</a>
+        <a href="#offers" class="btn btn-outline">Activate/deactivate offers</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Admins (<%= admins.length %>)</h2>
+      <% admins.forEach(function (a) { %>
+        <span class="chip chip-admin"><%= a.full_name %><% if (a.id === user.id) { %> (you)<% } %></span>
+      <% }) %>
+    </div>
+
+    <div class="panel" id="members">
+      <h2>Members (<%= members.length %>)</h2>
+      <table class="table">
+        <thead>
+          <tr><th>Name</th><th>Profession</th><th>Location</th><th>Contact</th><th>Status</th><th>Role</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          <% members.forEach(function (m) { %>
+            <tr class="<%= m.active === 0 ? 'row-inactive' : '' %>">
+              <td><a href="/profiles/<%= m.id %>"><%= m.full_name %></a></td>
+              <td><%= m.profession || '—' %></td>
+              <td><%= formatLocation(m) || '—' %></td>
+              <td><%= m.phone || m.email || '—' %></td>
+              <td>
+                <form action="/admin/users/<%= m.id %>/active" method="POST" class="inline-form">
+                  <button class="chip <%= m.active === 0 ? '' : 'active' %>" type="submit" name="active" value="<%= m.active === 0 ? '1' : '0' %>">
+                    <%= m.active === 0 ? 'Deactivated' : 'Active' %>
+                  </button>
+                </form>
+              </td>
+              <td>
+                <form action="/admin/users/<%= m.id %>/role" method="POST" class="inline-form">
+                  <select name="role" onchange="this.form.submit()">
+                    <option value="member" <%= m.role === 'member' ? 'selected' : '' %>>member</option>
+                    <option value="admin" <%= m.role === 'admin' ? 'selected' : '' %>>admin</option>
+                  </select>
+                </form>
+              </td>
+              <td>
+                <a href="/admin/users/<%= m.id %>/delete-confirm" class="link link-danger">Delete</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel" id="offers">
+      <h2>Recent offers — activate / deactivate</h2>
+      <table class="table">
+        <thead>
+          <tr><th>Title</th><th>Provider</th><th>Location</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          <% recentOffers.forEach(function (o) { %>
+            <tr class="<%= o.active === 0 ? 'row-inactive' : '' %>">
+              <td><a href="/services/<%= o.id %>"><%= o.title %></a></td>
+              <td><%= o.full_name %></td>
+              <td><%= formatLocation(o) || '—' %></td>
+              <td><span class="chip <%= o.active === 0 ? '' : 'active' %>"><%= o.active === 0 ? 'Hidden' : 'Visible' %></span></td>
+              <td>
+                <form action="/admin/offers/<%= o.id %>/active" method="POST" class="inline-form">
+                  <button class="btn btn-outline btn-sm" type="submit" name="active" value="<%= o.active === 0 ? '1' : '0' %>">
+                    <%= o.active === 0 ? 'Activate' : 'Deactivate' %>
+                  </button>
+                </form>
+                <a href="/services/<%= o.id %>/delete" class="link link-danger">Delete</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if (usersByState.length) { %>
+      <div class="panel">
+        <h2>Members by state</h2>
+        <div class="stat-row">
+          <% usersByState.slice(0, 20).forEach(function (s) { %>
+            <div class="stat-pill">
+              <span class="stat-pill-label"><%= s.state || '—' %></span>
+              <span class="stat-pill-value"><%= s.c %></span>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

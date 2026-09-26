@@ -1,0 +1,25 @@
+﻿<%- include('../partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <h1>Delete member</h1>
+    <p>This action cannot be undone.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container container-narrow">
+    <div class="card alert alert-warning">
+      <h3>Delete <%= member.full_name %>?</h3>
+      <p>Profession: <%= member.profession || '—' %> &bull; Location: <%= formatLocation(member) || '—' %></p>
+      <p>This will permanently remove the member and all their offers, requests and reviews.</p>
+      <div class="form-actions">
+        <a href="/admin/users/<%= member.id %>/delete" class="btn btn-danger">Yes, delete</a>
+        <a href="/admin" class="btn btn-outline">Cancel</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>
+

@@ -1,0 +1,57 @@
+﻿<%- include('../partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <div class="head-row">
+      <div>
+        <h1>Service requests</h1>
+        <p>Members ask for the services they need. Claim or respond to an open request.</p>
+      </div>
+      <% if (user) { %>
+        <a href="/requests/new" class="btn btn-primary">Ask for a service</a>
+      <% } %>
+    </div>
+    <form action="/requests" method="GET" class="search-form">
+      <input type="hidden" name="state" value="<%= selectedState %>">
+      <input type="text" name="q" value="<%= q %>" placeholder="Search requests&hellip;">
+      <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+    <%- include('../partials/state-filter', { selectedState, basePath: '/requests' }) %>
+    <div class="filter-bar">
+      <a href="/requests?state=<%= selectedState %>" class="chip <%= !status ? 'active' : '' %>">All</a>
+      <a href="/requests?state=<%= selectedState %>&status=open" class="chip <%= status === 'open' ? 'active' : '' %>">Open</a>
+      <a href="/requests?state=<%= selectedState %>&status=assigned" class="chip <%= status === 'assigned' ? 'active' : '' %>">Assigned</a>
+      <a href="/requests?state=<%= selectedState %>&status=completed" class="chip <%= status === 'completed' ? 'active' : '' %>">Completed</a>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="grid">
+      <% requests.forEach(function (r) { %>
+        <a href="/requests/<%= r.id %>" class="card">
+          <span class="card-tag card-tag-request"><%= r.category || 'General' %></span>
+          <h3><%= r.title %></h3>
+          <p><%= r.description.slice(0, 90) %>&hellip;</p>
+<div class="card-meta">
+            <span class="avatar"><%= r.full_name.charAt(0) %></span>
+            <span><%= r.full_name %></span>
+            <% var rloc = formatLocation(r); if (rloc) { %>
+              <span class="dot">&bull;</span>
+              <span><%= rloc %></span>
+            <% } %>
+            <span class="dot">&bull;</span>
+            <span class="status status-<%= r.status %>"><%= r.status.charAt(0).toUpperCase() + r.status.slice(1) %></span>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+    <% if (requests.length === 0) { %>
+      <div class="empty">No requests found. <% if (user) { %><a href="/requests/new">Post one.</a><% } %></div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>
+

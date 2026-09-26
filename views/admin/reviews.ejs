@@ -1,0 +1,42 @@
+<%- include('../partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <h1>Review moderation</h1>
+    <p>Review and remove inappropriate reviews.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="panel">
+      <% if (reviews.length === 0) { %>
+        <p class="muted">No reviews have been submitted yet.</p>
+      <% } else { %>
+        <table class="table">
+          <thead>
+            <tr><th>Reviewer</th><th>For</th><th>Rating</th><th>Comment</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            <% reviews.forEach(function (r) { %>
+              <tr>
+                <td><%= r.reviewer_name %></td>
+                <td><a href="/profiles/<%= r.professional_id %>"><%= r.professional_name %></a></td>
+                <td><span class="rating-stars small">
+                  <% var j; for (j = 1; j <= 5; j++) { %>
+                    <span class="<%= j <= r.rating ? 'on' : '' %>">&#9733;</span>
+                  <% } %>
+                </span></td>
+                <td><%= r.comment || '—' %></td>
+                <td><a href="/admin/reviews/<%= r.id %>/delete" class="link link-danger">Delete</a></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+    <a href="/admin" class="btn btn-outline">&larr; Back to dashboard</a>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

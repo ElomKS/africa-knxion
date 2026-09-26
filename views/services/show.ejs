@@ -1,0 +1,57 @@
+﻿<%- include('../partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <a href="/services" class="link">&larr; Back to offers</a>
+    <h1><%= offer.title %></h1>
+    <p><span class="card-tag"><%= offer.category || 'General' %></span>
+       <span>&#128205; <%= formatLocation(offer) || 'US-wide' %></span></p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="profile-layout">
+      <div class="profile-main">
+        <div class="panel">
+          <h2>Description</h2>
+          <p><%= offer.description %></p>
+          <div class="offer-price">
+            <span>Price</span>
+            <strong><%= offer.price || 'Contact for price' %></strong>
+          </div>
+        </div>
+      </div>
+      <aside class="profile-side">
+        <div class="panel">
+          <h3>Provider</h3>
+          <a class="list-item provider-box" href="/profiles/<%= offer.user_id %>">
+            <span class="avatar avatar-lg"><%= offer.full_name.charAt(0) %></span>
+            <div>
+              <strong><%= offer.full_name %></strong>
+              <span class="muted"><%= offer.profession || 'Member' %></span>
+            </div>
+          </a>
+<div class="profile-contact-stack">
+            <% if (offer.phone) { %>
+              <p><strong>Phone:</strong> <a href="tel:<%= offer.phone %>"><%= offer.phone %></a></p>
+            <% } %>
+            <% if (offer.email) { %>
+              <p><strong>Email:</strong> <a href="mailto:<%= offer.email %>"><%= offer.email %></a></p>
+            <% } %>
+          </div>
+          <% if (user && user.id !== offer.user_id) { %>
+            <a class="btn btn-primary w100" href="/services/<%= offer.id %>/book">&#128276; Book this service</a>
+            <a class="btn btn-outline w100" href="/messages/start/<%= offer.user_id %>">&#128172; Send a message</a>
+          <% } %>
+          <% if (user && user.role === 'admin') { %>
+            <a class="btn btn-danger w100" href="/services/<%= offer.id %>/delete">Delete offer</a>
+          <% } %>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>
+

@@ -1,0 +1,117 @@
+<%- include('partials/head') %>
+
+<section class="hero">
+  <div class="container hero-inner">
+    <div class="hero-text">
+      <span class="badge"><span class="badge-flag" aria-hidden="true"><i></i><i></i><i></i></span>The African community, united across the US</span>
+      <h1>Find a professional, <span>request a service</span>, and grow together.</h1>
+      <p>Africa KNXION connects African community members in the United States by profession and state. Register with your name, contact and skills, then ask for — or offer — services directly.</p>
+      <div class="hero-actions">
+        <% if (user) { %>
+          <a href="/services/new" class="btn btn-primary">Offer a service</a>
+          <a href="/requests/new" class="btn btn-outline">Request a service</a>
+        <% } else { %>
+          <a href="/auth/register" class="btn btn-primary">Join free</a>
+          <a href="/directory" class="btn btn-outline">Browse directory</a>
+        <% } %>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-card">
+        <span class="stat-number"><%= offers.length %></span>
+        <span class="stat-label">Service offers</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number"><%= requests.length %></span>
+        <span class="stat-label">Open requests</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number"><%= members.length %></span>
+        <span class="stat-label">Members</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <h2>Latest service offers</h2>
+      <a href="/services" class="link">View all &rarr;</a>
+    </div>
+    <div class="grid">
+      <% offers.forEach(function (o) { %>
+        <a href="/services/<%= o.id %>" class="card">
+          <span class="card-tag"><%= o.category || 'General' %></span>
+          <h3><%= o.title %></h3>
+          <p><%= o.description.slice(0, 90) %>&hellip;</p>
+          <div class="card-meta">
+            <span class="avatar"><%= o.full_name.charAt(0) %></span>
+            <span><%= o.full_name %></span>
+            <span class="dot">&bull;</span>
+            <span><%= formatLocation(o) || 'US-wide' %></span>
+          </div>
+        </a>
+      <% }) %>
+      <% if (offers.length === 0) { %>
+        <div class="empty">No offers yet. <a href="/services/new">Be the first.</a></div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-head">
+      <h2>Service requests</h2>
+      <a href="/requests" class="link">View all &rarr;</a>
+    </div>
+    <div class="grid">
+      <% requests.forEach(function (r) { %>
+        <a href="/requests/<%= r.id %>" class="card">
+          <span class="card-tag card-tag-request"><%= r.category || 'General' %></span>
+          <h3><%= r.title %></h3>
+          <p><%= r.description.slice(0, 90) %>&hellip;</p>
+          <div class="card-meta">
+            <span class="avatar"><%= r.full_name.charAt(0) %></span>
+            <span><%= r.full_name %></span>
+            <span class="dot">&bull;</span>
+            <span class="status status-open">Open</span>
+          </div>
+        </a>
+      <% }) %>
+      <% if (requests.length === 0) { %>
+        <div class="empty">No open requests. <a href="/requests/new">Post one.</a></div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <h2>Community members</h2>
+      <a href="/directory" class="link">Full directory &rarr;</a>
+    </div>
+    <div class="grid">
+      <% members.forEach(function (m) { %>
+        <a href="/profiles/<%= m.id %>" class="card card-member">
+          <div class="member-head">
+            <span class="avatar avatar-lg"><%= m.full_name.charAt(0) %></span>
+            <div>
+              <h3><%= m.full_name %></h3>
+              <p class="member-prof"><%= m.profession || 'Member' %></p>
+            </div>
+          </div>
+          <p class="member-bio"><%= m.bio ? m.bio.slice(0, 80) : 'Member of the Africa KNXION community.' %>&hellip;</p>
+          <div class="card-meta">
+            <span>&#128205;</span>
+            <span><%= formatLocation(m) || 'US-wide' %></span>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

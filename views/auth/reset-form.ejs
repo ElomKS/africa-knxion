@@ -1,0 +1,45 @@
+<%- include('../partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <h1><%= invalid ? 'Invalid reset link' : 'Set a new password' %></h1>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container container-narrow">
+    <% if (typeof done !== 'undefined' && done) { %>
+      <div class="alert alert-success">
+        <strong>Password updated.</strong> You can now
+        <a href="/auth/login">log in</a> with your new password.
+      </div>
+      <a href="/auth/login" class="btn btn-primary">Go to login</a>
+    <% } else if (invalid) { %>
+      <div class="alert alert-warning">
+        <%= error || 'This reset link is invalid or expired (it is valid for 10 minutes).' %>
+      </div>
+      <a href="/auth/forgot" class="btn btn-primary">Request a new link</a>
+    <% } else { %>
+      <% if (error) { %>
+        <div class="alert alert-error"><%= error %></div>
+      <% } %>
+      <form action="/auth/reset/token" method="POST" class="card form-card">
+        <input type="hidden" name="token" value="<%= token %>">
+        <div class="form-group">
+          <label for="new_password">New password</label>
+          <input type="password" id="new_password" name="new_password" required minlength="6">
+        </div>
+        <div class="form-group">
+          <label for="new_password_confirm">Confirm new password</label>
+          <input type="password" id="new_password_confirm" name="new_password_confirm" required minlength="6">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Update password</button>
+        </div>
+        <p class="muted center"><a href="/auth/login">Cancel</a></p>
+      </form>
+    <% } %>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

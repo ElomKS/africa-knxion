@@ -1,0 +1,42 @@
+<%- include('partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <h1>Member directory</h1>
+    <p>Find professionals across the community by name, profession or US state.</p>
+    <form action="/directory" method="GET" class="search-form">
+      <input type="hidden" name="state" value="<%= selectedState %>">
+      <input type="text" name="q" value="<%= q %>" placeholder="Search by name, profession or location&hellip;">
+      <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+    <%- include('partials/state-filter', { selectedState, basePath: '/directory' }) %>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="grid">
+      <% members.forEach(function (m) { %>
+        <a href="/profiles/<%= m.id %>" class="card card-member">
+          <div class="member-head">
+            <span class="avatar avatar-lg"><%= m.full_name.charAt(0) %></span>
+            <div>
+              <h3><%= m.full_name %></h3>
+              <p class="member-prof"><%= m.profession || 'Member' %></p>
+            </div>
+          </div>
+          <p class="member-bio"><%= m.bio ? m.bio.slice(0, 90) : 'Member of the Africa KNXION community.' %></p>
+          <div class="card-meta">
+            <span>&#128205; <%= formatLocation(m) || 'US-wide' %></span>
+            <% if (m.phone) { %><span>&#128222; <%= m.phone %></span><% } %>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+    <% if (members.length === 0) { %>
+      <div class="empty">No members found. <a href="/auth/register">Join the community.</a></div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

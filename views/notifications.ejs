@@ -1,0 +1,33 @@
+<%- include('partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <h1>Notifications</h1>
+    <p>Activity on your services, bookings and messages.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container container-narrow">
+    <% if (notifications.length === 0) { %>
+      <div class="panel center">
+        <p>You have no notifications.</p>
+      </div>
+    <% } else { %>
+      <div class="card list">
+        <% notifications.forEach(function (n) { %>
+          <% var target = ''; if (n.type === 'reservation') { target = '/account#bookings'; } else if (n.type === 'message') { target = '/messages/' + n.ref_id; } %>
+          <a class="list-item" href="<%= target || '/notifications' %>">
+            <div>
+              <% if (!n.read) { %><span class="badge">new</span><% } %>
+              <span class="muted"><%= n.created_at %></span><br>
+              <span><%= n.text %></span>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

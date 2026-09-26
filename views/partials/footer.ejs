@@ -1,0 +1,40 @@
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-col">
+        <h4>Africa KNXION</h4>
+        <p>Connecting the African community through direct services. Find the right professional, or offer your skill.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Explore</h4>
+        <a href="/services">Service offers</a>
+        <a href="/requests">Service requests</a>
+        <a href="/directory">Member directory</a>
+        <a href="/about">About</a>
+      </div>
+      <div class="footer-col">
+        <h4>Account</h4>
+        <% if (user) { %>
+          <a href="/account">My account</a>
+          <a href="/services/new">Publish an offer</a>
+          <a href="/requests/new">Ask for a service</a>
+        <% } else { %>
+          <a href="/auth/register">Join free</a>
+          <a href="/auth/login">Login</a>
+        <% } %>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <a href="/contact">Contact us</a>
+        <span class="footer-note">United in service. <em>KNXION</em></span>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        &copy; <%= new Date().getFullYear() %> Africa KNXION. All rights reserved.
+      </div>
+    </div>
+  </footer>
+  <script src="/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+﻿<%- include('../partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <div class="head-row">
+      <div>
+        <h1>Service offers</h1>
+<p>Professionals publish the services they provide to US communities.</p>
+      </div>
+      <% if (user) { %>
+        <a href="/services/new" class="btn btn-primary">Publish an offer</a>
+      <% } %>
+    </div>
+    <form action="/services" method="GET" class="search-form">
+      <input type="hidden" name="state" value="<%= selectedState %>">
+      <input type="text" name="q" value="<%= q %>" placeholder="Search offers&hellip;">
+      <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+    <%- include('../partials/state-filter', { selectedState, basePath: '/services' }) %>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="grid">
+      <% offers.forEach(function (o) { %>
+        <a href="/services/<%= o.id %>" class="card">
+          <span class="card-tag"><%= o.category || 'General' %></span>
+          <h3><%= o.title %></h3>
+          <p><%= o.description.slice(0, 90) %>&hellip;</p>
+          <div class="card-meta">
+            <span class="avatar"><%= o.full_name.charAt(0) %></span>
+            <span><%= o.full_name %></span>
+            <span class="dot">&bull;</span>
+            <span><%= formatLocation(o) || 'US-wide' %></span>
+          </div>
+          <div class="card-price"><%= o.price || 'Contact for price' %></div>
+        </a>
+      <% }) %>
+    </div>
+    <% if (offers.length === 0) { %>
+      <div class="empty">No offers found. <% if (user) { %><a href="/services/new">Publish the first one.</a><% } %></div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>
+

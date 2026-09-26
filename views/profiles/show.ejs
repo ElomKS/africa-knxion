@@ -1,0 +1,120 @@
+﻿<%- include('../partials/head') %>
+
+<section class="page-head">
+  <div class="container profile-header-inline">
+    <div class="profile-avatar-block">
+      <span class="avatar avatar-xl"><%= member.full_name.charAt(0) %></span>
+      <div>
+        <h1><%= member.full_name %></h1>
+        <p class="member-prof"><%= member.profession || 'Member' %></p>
+        <div class="profile-contact">
+          <% if (member.city || member.state || member.zip) { %><span>&#128205; <%= formatLocation(member) %></span><% } %>
+          <% if (member.phone) { %><span>&#128222; <%= member.phone %></span><% } %>
+          <% if (member.email) { %><span>&#9993; <%= member.email %></span><% } %>
+        </div>
+      </div>
+    </div>
+    <div class="rating-block">
+      <span class="rating-stars">
+        <% var r = rating.avg; var i; for (i = 1; i <= 5; i++) { %>
+          <span class="<%= i <= Math.round(r) ? 'on' : '' %>">&#9733;</span>
+        <% } %>
+      </span>
+      <span class="rating-num"><%= rating.avg %> / 5</span>
+      <span class="rating-count">(<%= rating.count %> review<%= rating.count === 1 ? '' : 's' %>)</span>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="profile-layout">
+      <div class="profile-main">
+        <div class="panel">
+          <h2>About</h2>
+          <p><%= member.bio || 'This member has not added a bio yet.' %></p>
+        </div>
+
+        <div class="panel">
+          <h2>Service offers by <%= member.full_name %></h2>
+          <% if (offers.length === 0) { %>
+            <p class="muted">No offers published yet.</p>
+          <% } %>
+          <div class="list">
+            <% offers.forEach(function (o) { %>
+              <a class="list-item" href="/services/<%= o.id %>">
+                <div>
+                  <strong><%= o.title %></strong>
+                  <span class="card-tag"><%= o.category || 'General' %></span>
+                  <p><%= o.description.slice(0, 100) %>&hellip;</p>
+                </div>
+                <span class="price"><%= o.price || 'Contact' %></span>
+              </a>
+            <% }) %>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Reviews</h2>
+          <% if (reviews.length === 0) { %>
+            <p class="muted">No reviews yet.</p>
+          <% } %>
+          <% reviews.forEach(function (rev) { %>
+            <div class="review">
+              <div class="review-head">
+                <span class="avatar avatar-sm"><%= rev.full_name.charAt(0) %></span>
+                <strong><%= rev.full_name %></strong>
+                <span class="rating-stars small">
+                  <% var j; for (j = 1; j <= 5; j++) { %>
+                    <span class="<%= j <= rev.rating ? 'on' : '' %>">&#9733;</span>
+                  <% } %>
+                </span>
+              </div>
+              <p><%= rev.comment || 'No comment.' %></p>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+
+<aside class="profile-side">
+        <% if (user && user.id !== member.id) { %>
+          <div class="panel">
+            <a class="btn btn-primary w100" href="/messages/start/<%= member.id %>">&#128172; Send a message</a>
+          </div>
+        <% } %>
+        <% if (user) { %>
+          <div class="panel">
+            <h3>Leave a review</h3>
+            <form action="/profiles/<%= member.id %>/reviews" method="POST" class="stack-form">
+              <label>Rating</label>
+              <select name="rating" required>
+                <option value="5">5 - Excellent</option>
+                <option value="4">4 - Good</option>
+                <option value="3">3 - Average</option>
+                <option value="2">2 - Poor</option>
+                <option value="1">1 - Bad</option>
+              </select>
+              <label>Comment</label>
+              <textarea name="comment" rows="3" placeholder="Share your experience&hellip;"></textarea>
+              <button class="btn btn-primary" type="submit">Submit review</button>
+            </form>
+          </div>
+        <% } else { %>
+          <div class="panel">
+            <h3>Contact <%= member.full_name %></h3>
+            <% if (member.phone) { %>
+              <p><strong>Phone:</strong> <a href="tel:<%= member.phone %>"><%= member.phone %></a></p>
+            <% } %>
+            <% if (member.email) { %>
+              <p><strong>Email:</strong> <a href="mailto:<%= member.email %>"><%= member.email %></a></p>
+            <% } %>
+            <p class="muted"><a href="/auth/login">Login</a> to leave a review or send a request.</p>
+          </div>
+        <% } %>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>
+

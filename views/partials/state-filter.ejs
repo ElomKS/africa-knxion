@@ -1,0 +1,32 @@
+<!-- State + city filter used on directory, services and requests pages.
+     Expects: selectedState, selectedCity, cities (list for the selected state),
+     basePath (string), and available states via `states`. -->
+<form action="<%= basePath %>" method="GET" class="state-filter">
+  <input type="hidden" name="q" value="<%= typeof q !== 'undefined' ? q : '' %>">
+  <% if (typeof status !== 'undefined' && status) { %>
+    <input type="hidden" name="status" value="<%= status %>">
+  <% } %>
+  <div class="filter-field">
+    <label for="stateSelect" class="sr-only">Filter by state</label>
+    <select id="stateSelect" name="state" onchange="this.form.submit()">
+      <option value="">All states</option>
+      <% states.forEach(function (s) { %>
+        <option value="<%= s.code %>" <%= selectedState === s.code ? 'selected' : '' %>><%= s.name %></option>
+      <% }) %>
+    </select>
+  </div>
+  <% if (selectedState && cities && cities.length) { %>
+    <div class="filter-field">
+      <label for="citySelect" class="sr-only">Filter by city</label>
+      <select id="citySelect" name="city" onchange="this.form.submit()">
+        <option value="">All cities</option>
+        <% cities.forEach(function (c) { %>
+          <option value="<%= c %>" <%= selectedCity === c ? 'selected' : '' %>><%= c %></option>
+        <% }) %>
+      </select>
+    </div>
+  <% } %>
+  <% if (selectedState || selectedCity) { %>
+    <a href="<%= basePath %>?q=<%= typeof q !== 'undefined' ? encodeURIComponent(q) : '' %>" class="state-clear">Clear</a>
+  <% } %>
+</form>

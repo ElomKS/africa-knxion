@@ -1,0 +1,33 @@
+﻿<%- include('../partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <h1>Contact messages</h1>
+    <p>Messages sent through the contact form.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="panel">
+      <% if (messages.length === 0) { %>
+        <p class="muted">No messages yet.</p>
+      <% } %>
+      <% messages.forEach(function (m) { %>
+        <div class="contact-msg">
+          <div class="contact-msg-head">
+            <strong><%= m.name %></strong>
+            <span class="muted"><%= m.email %></span>
+            <span class="muted"><%= m.created_at %></span>
+          </div>
+          <p><%= m.message %></p>
+          <a href="/admin/messages/<%= m.id %>/delete" class="link link-danger">Delete</a>
+        </div>
+      <% }) %>
+    </div>
+    <a href="/admin" class="btn btn-outline">&larr; Back to dashboard</a>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>
+

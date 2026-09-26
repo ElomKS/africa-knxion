@@ -1,0 +1,145 @@
+<%- include('partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <h1>My account</h1>
+    <p>Update your profile so the community knows who you are and what you do.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container container-narrow">
+    <form action="/account" method="POST" class="card form-card">
+      <div class="form-group">
+        <label for="full_name">Full name</label>
+        <input type="text" id="full_name" name="full_name" value="<%= member.full_name %>" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" value="<%= member.email || '' %>">
+        </div>
+        <div class="form-group">
+          <label for="phone">Phone</label>
+          <input type="text" id="phone" name="phone" value="<%= member.phone || '' %>">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="profession">Profession</label>
+          <input type="text" id="profession" name="profession" value="<%= member.profession || '' %>">
+        </div>
+      </div>
+      <div class="location-block">
+        <%- include('partials/location-fields', { value: { city: member.city || '', state: member.state || '', zip: member.zip || '' } }) %>
+      </div>
+      <div class="form-group">
+        <label for="bio">Bio</label>
+        <textarea id="bio" name="bio" rows="5" placeholder="Tell the community about your experience and services&hellip;"><%= member.bio || '' %></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save changes</button>
+        <a href="/profiles/<%= member.id %>" class="btn btn-outline">View public profile</a>
+      </div>
+    </form>
+
+    <% if (userok) { %>
+      <div class="alert alert-success">Username updated successfully.</div>
+    <% } %>
+    <% if (passok) { %>
+      <div class="alert alert-success">Password updated successfully. You can now log in with your new password.</div>
+    <% } %>
+
+    <div class="panel" id="credentials">
+      <h3>Login credentials</h3>
+      <% if (account) { %>
+        <p class="muted">Your current username is <strong><%= account.username %></strong>.</p>
+      <% } %>
+      <% if (typeof userError !== 'undefined' && userError) { %>
+        <div class="alert alert-error"><%= userError %></div>
+      <% } %>
+      <% if (typeof passError !== 'undefined' && passError) { %>
+        <div class="alert alert-error"><%= passError %></div>
+      <% } %>
+
+      <h4>Change username</h4>
+      <form action="/account/username" method="POST" class="stack-form">
+        <div class="form-group">
+          <label for="current_username">Current username</label>
+          <input type="text" id="current_username" name="current_username" required>
+        </div>
+        <div class="form-group">
+          <label for="new_username">New username</label>
+          <input type="text" id="new_username" name="new_username" required>
+        </div>
+        <button class="btn btn-outline" type="submit">Update username</button>
+      </form>
+
+      <h4>Change password</h4>
+      <form action="/account/password" method="POST" class="stack-form">
+        <div class="form-group">
+          <label for="current_password">Current password</label>
+          <input type="password" id="current_password" name="current_password" required>
+        </div>
+        <div class="form-group">
+          <label for="new_password">New password</label>
+          <input type="password" id="new_password" name="new_password" required minlength="6">
+        </div>
+        <div class="form-group">
+          <label for="new_password_confirm">Confirm new password</label>
+          <input type="password" id="new_password_confirm" name="new_password_confirm" required minlength="6">
+        </div>
+        <button class="btn btn-outline" type="submit">Update password</button>
+      </form>
+      <p class="muted">Forgot your password? <a href="/auth/forgot">Reset it here</a>.</p>
+    </div>
+
+    <div class="panel" id="bookings">
+      <h3>Bookings I received</h3>
+      <% if (incomingBookings.length === 0) { %>
+        <p class="muted">No bookings received yet.</p>
+      <% } else { %>
+        <% incomingBookings.forEach(function (b) { %>
+          <a class="list-item" href="/reservations/<%= b.id %>/respond">
+            <div>
+              <strong><%= b.offer_title %></strong> &middot;
+              <span class="status-badge status-<%= b.status %>"><%= b.status %></span><br>
+              <span class="muted">From <%= b.client_name %></span>
+            </div>
+          </a>
+        <% }) %>
+      <% } %>
+    </div>
+
+    <div class="panel">
+      <h3>My bookings</h3>
+      <% if (myBookings.length === 0) { %>
+        <p class="muted">You haven't booked any services yet.</p>
+      <% } else { %>
+        <% myBookings.forEach(function (b) { %>
+          <a class="list-item" href="/reservations/<%= b.id %>/respond">
+            <div>
+              <strong><%= b.offer_title %></strong> &middot;
+              <span class="status-badge status-<%= b.status %>"><%= b.status %></span>
+            </div>
+          </a>
+        <% }) %>
+      <% } %>
+    </div>
+
+    <div class="panel">
+      <h3>My published offers</h3>
+      <% if (myOffers.length === 0) { %>
+        <p class="muted">You haven't published any offers yet. <a href="/services/new">Publish one</a>.</p>
+      <% } else { %>
+        <% myOffers.forEach(function (o) { %>
+          <a class="list-item" href="/services/<%= o.id %>">
+            <div><strong><%= o.title %></strong> <span class="muted">&middot; <%= o.price || 'negotiable' %></span></div>
+          </a>
+        <% }) %>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>
