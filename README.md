@@ -80,3 +80,26 @@ Reset links are single-use and expire after **10 minutes**.
 
 - Uses a local SQLite database (`africa-knxion.db`), gitignored.
 - In production, set `NODE_ENV=production` and a `DATA_DIR`.
+
+## Deploy on Render
+
+The app is ready for [Render](https://render.com) as a **Web Service**.
+
+1. Create a Web Service from the GitHub repo (`ElomKS/africa-knxion`).
+2. Configure:
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start` (or the Procfile: `node index.js`)
+   - **Instance Type**: Free
+3. Set environment variables in the dashboard:
+   - `NODE_ENV=production`
+   - `SESSION_SECRET` — random secret
+   - `SMTP_HOST=smtp-relay.brevo.com`
+   - `SMTP_PORT=587`
+   - `SMTP_USER` — Brevo SMTP login (`...@smtp-brevo.com`)
+   - `SMTP_PASS` — Brevo SMTP key
+   - `MAIL_FROM` — validated Brevo sender, e.g. `Africa KNXION <komlavi.elom@outlook.fr>`
+   - `CONTACT_NOTIFY_EMAIL` — recipient for contact form notifications
+
+> **Note on persistence**: with a free instance the disk is **ephemeral** — the SQLite database is re-seeded on every deploy and data is lost. To persist data across deploys, add a **Persistent Disk** (Render paid) and point `DATA_DIR` to the mounted path (e.g. `/var/data`).
+
+On Windows, local npm scripts run Node with `--use-system-ca` so that a local AV/proxy TLS root (e.g. Norton) is trusted during the SMTP handshake. This flag is harmless on Linux/Render.
