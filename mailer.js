@@ -40,8 +40,9 @@ function notifyTarget() {
 async function send({ to, subject, text, html, label }) {
   const { transporter: t, from } = getTransporter();
   if (t) {
-    await t.sendMail({ from, to, subject, text, html });
-    return { delivered: true, mode: 'smtp' };
+    const info = await t.sendMail({ from, to, subject, text, html });
+    console.log(`[Mailer] sent ${label} to ${to} via ${mode} (messageId: ${info.messageId})`);
+    return { delivered: true, mode: 'smtp', messageId: info.messageId };
   }
   // Dev fallback: log the message so flows can still be exercised locally.
   console.log(`\n[Mailer] (no SMTP configured) ${label} -> ${to}\nSubject: ${subject}\n${text}\n`);
