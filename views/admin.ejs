@@ -129,7 +129,9 @@
                     <%= o.active === 0 ? 'Activate' : 'Deactivate' %>
                   </button>
                 </form>
-                <a href="/services/<%= o.id %>/delete" class="link link-danger">Delete</a>
+                <form action="/services/<%= o.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Delete this offer permanently?')">
+                  <button class="link link-danger btn-link" type="submit">Delete</button>
+                </form>
               </td>
             </tr>
           <% }) %>

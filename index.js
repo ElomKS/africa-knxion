@@ -3,6 +3,7 @@ import 'dotenv/config';
 import crypto from 'node:crypto';
 import express from 'express';
 import session from 'express-session';
+import helmet from 'helmet';
 import {
   registerUserWithAccount,
   authenticateUser,
@@ -70,8 +71,24 @@ export const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
 const PORT = process.env.PORT || 3000;
 
+if (isProduction && !process.env.SESSION_SECRET) {
+  console.error('FATAL: SESSION_SECRET is required in production. Refusing to start.');
+  process.exit(1);
+}
+
 app.set('trust proxy', 1);
 app.set('view engine', 'ejs');
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
+      fontSrc: ['https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:'],
+      scriptSrc: ["'self'"],
+    },
+  },
+}));
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -106,6 +123,50 @@ function currentUser(req) {
   if (!req.session.userId) return null;
   return getUserById(req.session.userId);
 }
+
+function safeNext(value) {
+  if (typeof value !== 'string' || !value) return '/';
+  // Only allow internal relative paths: start with '/', no '//', no ':' (so no
+  // 'https://', '//host', 'javascript:' ...) and no backslash tricks.
+  if (!value.startsWith('/')) return '/';
+  if (value.startsWith('//') || value.includes('\\')) return '/';
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value)) return '/';
+  return value;
+}
+
+// Simple in-memory rate limiter (per IP + bucket). Good enough for the free
+// Render tier; a distributed store would be needed for horizontal scaling.
+const rateBuckets = new Map();
+function rateLimit({ windowMs, max }) {
+  return (req, res, next) => {
+    const key = req.ip || req.socket.remoteAddress || 'unknown';
+    const now = Date.now();
+    const bucket = rateBuckets.get(key);
+    if (!bucket || bucket.resetAt <= now) {
+      rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+      return next();
+    }
+    bucket.count += 1;
+    if (bucket.count > max) {
+      const retryAfter = Math.ceil((bucket.resetAt - now) / 1000);
+      res.set('Retry-After', String(retryAfter));
+      return res.status(429).render('error', {
+        title: 'Too many attempts',
+        error: `Too many attempts. Please try again in ${retryAfter} seconds.`,
+        user: req.session.user,
+      });
+    }
+    next();
+  };
+}
+
+// Periodically drop old buckets so the map does not grow unbounded.
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, b] of rateBuckets) {
+    if (b.resetAt <= now) rateBuckets.delete(k);
+  }
+}, 60_000).unref();
 
 // Expose current user to all views
 app.use((req, res, next) => {
@@ -225,7 +286,7 @@ app.get('/services/:id', (req, res) => {
   res.render('services/show', { title: offer.title, offer });
 });
 
-app.get('/services/:id/delete', requireAdmin, (req, res) => {
+app.post('/services/:id/delete', requireAdmin, (req, res) => {
   deleteOffer(Number(req.params.id));
   res.redirect('/services');
 });
@@ -295,7 +356,7 @@ app.post('/requests/:id/status', requireAuth, (req, res) => {
   res.redirect(`/requests/${id}`);
 });
 
-app.get('/requests/:id/delete', requireAdmin, (req, res) => {
+app.post('/requests/:id/delete', requireAdmin, (req, res) => {
   deleteRequest(Number(req.params.id));
   res.redirect('/requests');
 });
@@ -440,7 +501,7 @@ app.get('/auth/register', (req, res) => {
   res.render('auth/register', { title: 'Join Africa KNXION' });
 });
 
-app.post('/auth/register', (req, res) => {
+app.post('/auth/register', rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }), (req, res) => {
   const { full_name, email, phone, profession, bio, city, state, zip, username, password, password_confirm } = req.body;
   if (!full_name || !username || !password) {
     return res.status(400).render('auth/register', { title: 'Join Africa KNXION', error: 'Name, username and password are required.' });
@@ -462,7 +523,7 @@ app.post('/auth/register', (req, res) => {
       password,
     });
     req.session.userId = user.id;
-    const next = req.query.next || '/';
+    const next = safeNext(req.query.next);
     res.redirect(next);
   } catch (err) {
     return res.status(400).render('auth/register', { title: 'Join Africa KNXION', error: 'Username or email already in use.' });
@@ -474,7 +535,7 @@ app.get('/auth/login', (req, res) => {
   res.render('auth/login', { title: 'Login' });
 });
 
-app.post('/auth/login', (req, res) => {
+app.post('/auth/login', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }), (req, res) => {
   const { username, password } = req.body;
   const user = authenticateUser(username, password);
   if (!user) {
@@ -484,7 +545,7 @@ app.post('/auth/login', (req, res) => {
     return res.status(403).render('auth/login', { title: 'Login', error: 'This account has been deactivated. Contact an administrator.' });
   }
   req.session.userId = user.id;
-  const next = req.query.next || '/';
+  const next = safeNext(req.query.next);
   res.redirect(next);
 });
 
@@ -496,38 +557,28 @@ app.get('/auth/forgot', (req, res) => {
   res.render('auth/forgot', { title: 'Reset password', error: null, sent: false, requestedEmail: '' });
 });
 
-app.post('/auth/forgot', (req, res) => {
+app.post('/auth/forgot', rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }), async (req, res) => {
   const { username, email } = req.body;
   const account = getAccountByUsername(username || '');
   const user = account ? getUserById(account.user_id) : null;
-  if (!account || !user || (user.email || '').toLowerCase() !== (email || '').toLowerCase()) {
-    return res.status(400).render('auth/forgot', {
-      title: 'Reset password',
-      error: 'No account matches that username and email.',
-      sent: false,
-      requestedEmail: email || '',
+  // Always answer with the same generic "sent" response to avoid account
+  // enumeration, whether or not the account exists.
+  if (account && user && (user.email || '').toLowerCase() === (email || '').toLowerCase() && user.active === 1) {
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    createPasswordReset(user.id, token, expiresAt);
+    const host = req.headers.host || '';
+    const resetUrl = `${req.protocol}://${host}/auth/reset/token/${token}`;
+    sendPasswordResetEmail(user.email || email, resetUrl).catch((err) => {
+      console.error('Failed to send password reset email:', err);
     });
+  } else {
+    // Burn a similar amount of time so responses look alike.
+    await new Promise((resolve) => setTimeout(resolve, 300));
   }
-  if (user.active === 0) {
-    return res.status(400).render('auth/forgot', {
-      title: 'Reset password',
-      error: 'This account is deactivated. Contact an administrator.',
-      sent: false,
-      requestedEmail: email || '',
-    });
-  }
-  // Generate a single-use token valid for 10 minutes.
-  const token = crypto.randomBytes(32).toString('hex');
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-  createPasswordReset(user.id, token, expiresAt);
-  const host = req.headers.host || '';
-  const resetUrl = `${req.protocol}://${host}/auth/reset/token/${token}`;
-  sendPasswordResetEmail(user.email || email, resetUrl).catch((err) => {
-    console.error('Failed to send password reset email:', err);
-  });
   res.render('auth/forgot', {
     title: 'Reset password', error: null, sent: true,
-    requestedEmail: user.email || email,
+    requestedEmail: (email || '').toLowerCase(),
   });
 });
 
@@ -656,7 +707,7 @@ app.get('/admin/messages', requireAdmin, (req, res) => {
   res.render('admin/messages', { title: 'Contact messages', messages });
 });
 
-app.get('/admin/messages/:id/delete', requireAdmin, (req, res) => {
+app.post('/admin/messages/:id/delete', requireAdmin, (req, res) => {
   deleteContactMessage(Number(req.params.id));
   res.redirect('/admin/messages');
 });
@@ -666,7 +717,7 @@ app.get('/admin/reviews', requireAdmin, (req, res) => {
   res.render('admin/reviews', { title: 'Review moderation', reviews });
 });
 
-app.get('/admin/reviews/:id/delete', requireAdmin, (req, res) => {
+app.post('/admin/reviews/:id/delete', requireAdmin, (req, res) => {
   deleteReview(Number(req.params.id));
   res.redirect('/admin/reviews');
 });
@@ -694,7 +745,7 @@ app.post('/admin/offers/:id/active', requireAdmin, (req, res) => {
   res.redirect('/admin#offers');
 });
 
-app.get('/admin/users/:id/delete', requireAdmin, (req, res) => {
+app.post('/admin/users/:id/delete', requireAdmin, (req, res) => {
   const id = Number(req.params.id);
   if (id !== req.session.userId) deleteUser(id);
   res.redirect('/admin');

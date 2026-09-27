@@ -64,8 +64,10 @@
               <p><strong>Email:</strong> <a href="mailto:<%= request.email %>"><%= request.email %></a></p>
             <% } %>
           </div>
-          <% if (user && user.role === 'admin') { %>
-            <a class="btn btn-danger" href="/requests/<%= request.id %>/delete">Delete request</a>
+<% if (user && user.role === 'admin') { %>
+            <form action="/requests/<%= request.id %>/delete" method="POST" onsubmit="return confirm('Delete this request permanently?')">
+              <button class="btn btn-danger" type="submit">Delete request</button>
+            </form>
           <% } %>
         </div>
       </aside>

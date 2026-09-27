@@ -811,10 +811,23 @@ export function seedDatabase() {
   const seed = db.transaction(() => {
     // Users + accounts
     const userIds = {};
+    // In production the seeded demo accounts get random (discarded) passwords
+    // so the published "password123" demo credentials are never valid on a live
+    // site. The admin account uses ADMIN_PASSWORD if provided (set it as a
+    // Render env var), otherwise it too gets a random, unusable password.
+    const isProd = process.env.NODE_ENV === 'production';
     sampleUsers.forEach((u, i) => {
       const r = insertUser.run(u.fullName, u.email, u.phone, u.profession, u.bio, u.city, u.state, u.zip, u.role);
       userIds[u.email] = r.lastInsertRowid;
-      insertAccount.run(r.lastInsertRowid, `user${i + 1}`, hashPassword('password123'));
+      let password = 'password123';
+      if (isProd) {
+        if (u.role === 'admin' && process.env.ADMIN_PASSWORD) {
+          password = process.env.ADMIN_PASSWORD;
+        } else {
+          password = crypto.randomBytes(18).toString('base64url');
+        }
+      }
+      insertAccount.run(r.lastInsertRowid, `user${i + 1}`, hashPassword(password));
     });
     // Give the admin a friendly username
     db.prepare("UPDATE accounts SET username = 'admin' WHERE user_id = ?")

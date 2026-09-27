@@ -360,6 +360,14 @@ a:hover {
   color: var(--color-danger);
 }
 
+button.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
 /* Page head */
 .page-head {
   background: linear-gradient(135deg, #e7f5ee 0%, #f8f2e6 55%, #fdecec 100%);

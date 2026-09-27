@@ -13,8 +13,10 @@
       <h3>Delete <%= member.full_name %>?</h3>
       <p>Profession: <%= member.profession || '—' %> &bull; Location: <%= formatLocation(member) || '—' %></p>
       <p>This will permanently remove the member and all their offers, requests and reviews.</p>
-      <div class="form-actions">
-        <a href="/admin/users/<%= member.id %>/delete" class="btn btn-danger">Yes, delete</a>
+<div class="form-actions">
+        <form action="/admin/users/<%= member.id %>/delete" method="POST">
+          <button class="btn btn-danger" type="submit">Yes, delete</button>
+        </form>
         <a href="/admin" class="btn btn-outline">Cancel</a>
       </div>
     </div>

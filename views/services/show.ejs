@@ -45,7 +45,9 @@
             <a class="btn btn-outline w100" href="/messages/start/<%= offer.user_id %>">&#128172; Send a message</a>
           <% } %>
           <% if (user && user.role === 'admin') { %>
-            <a class="btn btn-danger w100" href="/services/<%= offer.id %>/delete">Delete offer</a>
+            <form action="/services/<%= offer.id %>/delete" method="POST" onsubmit="return confirm('Delete this offer permanently?')">
+              <button class="btn btn-danger w100" type="submit">Delete offer</button>
+            </form>
           <% } %>
         </div>
       </aside>

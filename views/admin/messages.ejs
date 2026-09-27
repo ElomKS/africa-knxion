@@ -20,8 +20,10 @@
             <span class="muted"><%= m.email %></span>
             <span class="muted"><%= m.created_at %></span>
           </div>
-          <p><%= m.message %></p>
-          <a href="/admin/messages/<%= m.id %>/delete" class="link link-danger">Delete</a>
+<p><%= m.message %></p>
+          <form action="/admin/messages/<%= m.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Delete this message?')">
+            <button class="link link-danger btn-link" type="submit">Delete</button>
+          </form>
         </div>
       <% }) %>
     </div>
