@@ -4,6 +4,12 @@ import nodemailer from 'nodemailer';
 let transporter = null;
 let mode = 'console';
 
+function parseFrom(value) {
+  const m = /^\s*([^<]+)\s*<([^>]+)>\s*$/.exec(value || '');
+  if (m) return { name: m[1].trim(), email: m[2].trim() };
+  return { name: null, email: (value || '').trim() };
+}
+
 function getTransporter() {
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT || 587);
@@ -12,7 +18,9 @@ function getTransporter() {
   const from = process.env.MAIL_FROM || user || 'no-reply@africaknxion.local';
 
   if (!transporter) {
-    if (host && user && pass) {
+    if (process.env.BREVO_API_KEY) {
+      mode = 'brevo-api';
+    } else if (host && user && pass) {
       transporter = nodemailer.createTransport({
         host,
         port,
@@ -37,8 +45,37 @@ function notifyTarget() {
   return process.env.CONTACT_NOTIFY_EMAIL || process.env.MAIL_TO || process.env.SMTP_USER || null;
 }
 
+async function sendViaBrevoApi({ to, subject, text, html, from, label }) {
+  const apiKey = process.env.BREVO_API_KEY;
+  const sender = parseFrom(from);
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      sender: { name: sender.name, email: sender.email },
+      to: [{ email: to }],
+      subject,
+      textContent: text,
+      htmlContent: html,
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Brevo API ${res.status}: ${body.slice(0, 300)}`);
+  }
+  const data = await res.json();
+  console.log(`[Mailer] sent ${label} to ${to} via brevo-api (messageId: ${data.messageId})`);
+  return { delivered: true, mode: 'brevo-api', messageId: data.messageId };
+}
+
 async function send({ to, subject, text, html, label }) {
   const { transporter: t, from } = getTransporter();
+  if (mode === 'brevo-api') {
+    return sendViaBrevoApi({ to, subject, text, html, from, label });
+  }
   if (t) {
     const info = await t.sendMail({ from, to, subject, text, html });
     console.log(`[Mailer] sent ${label} to ${to} via ${mode} (messageId: ${info.messageId})`);
