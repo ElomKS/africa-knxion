@@ -491,6 +491,19 @@ input:focus, select:focus, textarea:focus {
   font-size: 0.75rem;
 }
 
+.chip-featured {
+  background: #fff3cd;
+  color: #856404;
+  border-color: #f0c36d;
+}
+
+.chip-featured.active {
+  background: linear-gradient(135deg, #f6c445, #e8a317);
+  border-color: #e8a317;
+  color: #fff;
+  font-weight: 700;
+}
+
 /* Grid & cards */
 .grid {
   display: grid;
@@ -519,16 +532,51 @@ input:focus, select:focus, textarea:focus {
   color: var(--color-text);
 }
 
+.card-featured {
+  border-color: #e8a317;
+  box-shadow: 0 0 0 1px #e8a317, var(--shadow);
+}
+
+.card-featured:hover {
+  box-shadow: 0 0 0 1px #e8a317, var(--shadow-lg);
+}
+
+.featured-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #f6c445, #e8a317);
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-right: 8px;
+}
+
+.pro-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #7c5cff, #4e2fd6);
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-right: 8px;
+}
+
 .card h3 {
   margin: 10px 0 8px;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   color: var(--color-heading);
 }
 
 .card p {
   color: var(--color-muted);
-  font-size: 0.92rem;
-  margin: 0 0 14px;
+  font-size: 0.85rem;
+  margin: 0 0 12px;
 }
 
 .card-tag {
@@ -550,7 +598,7 @@ input:focus, select:focus, textarea:focus {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   color: var(--color-muted);
   flex-wrap: wrap;
 }

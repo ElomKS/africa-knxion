@@ -1,0 +1,79 @@
+<%- include('partials/head') %>
+
+<section class="page-head">
+  <div class="container">
+    <h1>Go PRO</h1>
+    <p>Get featured across the community. Monthly pricing based on your number of offers.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container container-narrow">
+    <div class="panel">
+      <h2>What PRO gives you</h2>
+      <ul class="feature-list">
+        <li><strong>&#9733; PRO badge</strong> on your profile, offers and directory listing</li>
+        <li><strong>Priority placement</strong> — your offers appear above regular listings</li>
+        <li><strong>All your offers promoted</strong> with one subscription, no per-offer fees</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>Monthly pricing</h2>
+      <table class="table">
+        <thead>
+          <tr><th>Active offers</th><th>Price / month</th><th>Your savings</th></tr>
+        </thead>
+        <tbody>
+          <% tiers.forEach(function (t) { %>
+            <tr>
+              <td><%= t.count %> <%= t.count === 1 ? 'offer' : 'offers' %></td>
+              <td><strong>$<%= t.price %></strong></td>
+              <td class="muted">$<%= t.savings %> saved vs single-offer pricing</td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <p class="muted">Pricing extends to more offers at $<%= PRO_ADDITIONAL_PRICE %> per extra offer (first offer $<%= PRO_BASE_PRICE %>).</p>
+    </div>
+
+    <% if (requestSent) { %>
+      <div class="alert alert-success"><strong>Request sent!</strong> We have notified the admin of your PRO upgrade. They will activate it shortly after payment.</div>
+    <% } %>
+
+    <div class="panel">
+      <h2>How to become PRO</h2>
+      <% if (user) { %>
+        <p class="muted">Your price is based on your current active offers. Pay via PayPal, then submit your request so we can verify and activate your badge.</p>
+        <ol class="feature-list">
+          <li><strong>1. Pay</strong> — click "Go to PayPal.me" and send the exact amount below.</li>
+          <li><strong>2. Notify us</strong> — submit the form so we activate your badge.</li>
+        </ol>
+        <form action="/pro/upgrade" method="POST" class="card form-card">
+          <div class="form-group">
+            <label>Duration (months)</label>
+            <select name="months" data-submit>
+              <% for (var m = 1; m <= 12; m++) { %>
+                <option value="<%= m %>" <%= m === 1 ? 'selected' : '' %>><%= m %> month<%= m > 1 ? 's' : '' %></option>
+              <% } %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Note to admin (optional)</label>
+            <textarea name="note" rows="2" placeholder="e.g. PayPal transaction ID, date, or account email&hellip;"></textarea>
+          </div>
+          <div class="stack-row">
+            <% if (paypalUrl) { %>
+              <a class="btn btn-primary" href="<%= paypalUrl %>?q=<%= encodeURIComponent('PRO upgrade') %>" target="_blank" rel="noopener">Pay with PayPal.me</a>
+            <% } %>
+            <button class="btn btn-outline" type="submit">Notify admin of my payment</button>
+          </div>
+        </form>
+      <% } else { %>
+        <p><a href="/auth/login">Login</a> or <a href="/auth/register">join free</a> to become PRO.</p>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

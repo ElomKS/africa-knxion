@@ -5,7 +5,7 @@
     <div class="profile-avatar-block">
       <span class="avatar avatar-xl"><%= member.full_name.charAt(0) %></span>
       <div>
-        <h1><%= member.full_name %></h1>
+        <h1><%= member.full_name %> <% if (member.featured) { %><span class="pro-badge">★ PRO</span><% } %></h1>
         <p class="member-prof"><%= member.profession || 'Member' %></p>
         <div class="profile-contact">
           <% if (member.city || member.state || member.zip) { %><span>&#128205; <%= formatLocation(member) %></span><% } %>

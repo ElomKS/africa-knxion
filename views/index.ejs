@@ -18,15 +18,15 @@
     </div>
     <div class="hero-stats">
       <div class="stat-card">
-        <span class="stat-number"><%= offers.length %></span>
+        <span class="stat-number"><%= statOffers %></span>
         <span class="stat-label">Service offers</span>
       </div>
       <div class="stat-card">
-        <span class="stat-number"><%= requests.length %></span>
+        <span class="stat-number"><%= statRequests %></span>
         <span class="stat-label">Open requests</span>
       </div>
       <div class="stat-card">
-        <span class="stat-number"><%= members.length %></span>
+        <span class="stat-number"><%= statMembers %></span>
         <span class="stat-label">Members</span>
       </div>
     </div>
@@ -41,7 +41,9 @@
     </div>
     <div class="grid">
       <% offers.forEach(function (o) { %>
-        <a href="/services/<%= o.id %>" class="card">
+        <a href="/services/<%= o.id %>" class="card <%= o.promo_kind ? 'card-featured' : '' %>">
+          <% if (o.promo_kind == 1) { %><span class="featured-badge">★ Featured</span><% } %>
+          <% if (o.promo_kind == 2) { %><span class="pro-badge">★ PRO</span><% } %>
           <span class="card-tag"><%= o.category || 'General' %></span>
           <h3><%= o.title %></h3>
           <p><%= o.description.slice(0, 90) %>&hellip;</p>

@@ -15,6 +15,16 @@ const db = new Database(path.join(dataDir, 'africa-knxion.db'));
 
 db.pragma('journal_mode = WAL');
 
+// Lightweight migrations for databases created before `featured` existed.
+function ensureColumn(table, column, definition) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+  if (!cols.some((c) => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+}
+ensureColumn('users', 'featured', 'INTEGER NOT NULL DEFAULT 0');
+ensureColumn('service_offers', 'featured', 'INTEGER NOT NULL DEFAULT 0');
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,6 +38,7 @@ db.exec(`
     zip TEXT DEFAULT '',
     role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('admin', 'member')),
     active INTEGER NOT NULL DEFAULT 1,
+    featured INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -50,6 +61,7 @@ db.exec(`
     state TEXT DEFAULT '',
     zip TEXT DEFAULT '',
     active INTEGER NOT NULL DEFAULT 1,
+    featured INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
@@ -140,6 +152,18 @@ db.exec(`
     token TEXT NOT NULL,
     expires_at TEXT NOT NULL,
     used INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS pro_upgrades (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    offer_count INTEGER NOT NULL DEFAULT 0,
+    price INTEGER NOT NULL DEFAULT 0,
+    months INTEGER NOT NULL DEFAULT 1,
+    note TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
@@ -265,7 +289,7 @@ export function markPasswordResetUsed(id) {
 }
 
 export function getAllUsers() {
-  return db.prepare('SELECT * FROM users ORDER BY id DESC').all();
+  return db.prepare('SELECT * FROM users ORDER BY featured DESC, id DESC').all();
 }
 
 export function searchUsers(query = '') {
@@ -273,7 +297,7 @@ export function searchUsers(query = '') {
   return db.prepare(`
     SELECT * FROM users
     WHERE full_name LIKE ? OR profession LIKE ? OR city LIKE ? OR state LIKE ? OR zip LIKE ?
-    ORDER BY id DESC
+    ORDER BY featured DESC, id DESC
   `).all(q, q, q, q, q);
 }
 
@@ -297,6 +321,10 @@ export function setUserRole(id, role) {
 
 export function setUserActive(id, active) {
   return db.prepare('UPDATE users SET active = ? WHERE id = ?').run(active ? 1 : 0, id);
+}
+
+export function setUserFeatured(id, featured) {
+  return db.prepare('UPDATE users SET featured = ? WHERE id = ?').run(featured ? 1 : 0, id);
 }
 
 export function authenticateUser(username, password) {
@@ -324,32 +352,37 @@ export function createOffer({ userId, title, description, price = '', category =
 
 export function getOfferById(id) {
   return db.prepare(`
-    SELECT o.*, u.full_name, u.profession, u.email, u.phone
+    SELECT o.*, u.full_name, u.profession, u.email, u.phone, ${OFFER_PROMOTION}
     FROM service_offers o
     JOIN users u ON u.id = o.user_id
     WHERE o.id = ?
   `).get(id);
 }
 
+const OFFER_PROMOTION = `
+  (CASE WHEN o.featured = 1 OR u.featured = 1 THEN 1 ELSE 0 END) AS promoted,
+  (CASE WHEN o.featured = 1 THEN 1 WHEN u.featured = 1 THEN 2 ELSE 0 END) AS promo_kind
+`;
+
 export function getAllOffers() {
   return db.prepare(`
-    SELECT o.*, u.full_name, u.profession, u.email, u.phone
+    SELECT o.*, u.full_name, u.profession, u.email, u.phone, ${OFFER_PROMOTION}
     FROM service_offers o
     JOIN users u ON u.id = o.user_id
-    ORDER BY o.id DESC
+    ORDER BY promoted DESC, o.id DESC
   `).all();
 }
 
 export function searchOffers(query = '') {
   const q = `%${query}%`;
   return db.prepare(`
-    SELECT o.*, u.full_name, u.profession, u.email, u.phone
+    SELECT o.*, u.full_name, u.profession, u.email, u.phone, ${OFFER_PROMOTION}
     FROM service_offers o
     JOIN users u ON u.id = o.user_id
     WHERE o.title LIKE ? OR o.description LIKE ? OR o.category LIKE ?
       OR o.city LIKE ? OR o.state LIKE ? OR o.zip LIKE ?
       OR u.full_name LIKE ? OR u.profession LIKE ?
-    ORDER BY o.id DESC
+    ORDER BY promoted DESC, o.id DESC
   `).all(q, q, q, q, q, q, q, q);
 }
 
@@ -359,6 +392,10 @@ export function deleteOffer(id) {
 
 export function setOfferActive(id, active) {
   return db.prepare('UPDATE service_offers SET active = ? WHERE id = ?').run(active ? 1 : 0, id);
+}
+
+export function setOfferFeatured(id, featured) {
+  return db.prepare('UPDATE service_offers SET featured = ? WHERE id = ?').run(featured ? 1 : 0, id);
 }
 
 /* ---------- Service requests ---------- */
@@ -704,6 +741,31 @@ export function getCategoriesCount() {
     GROUP BY category
     ORDER BY c DESC
   `).all();
+}
+
+/* ---------- PRO upgrade requests ---------- */
+
+export function createProUpgrade({ userId, offerCount, price, months = 1, note = '' }) {
+  return db.prepare(`
+    INSERT INTO pro_upgrades (user_id, offer_count, price, months, note)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(userId, offerCount, price, months, note);
+}
+
+export function getProUpgrades(status = 'pending') {
+  return db.prepare(`
+    SELECT p.*, u.full_name, u.email, u.profession
+    FROM pro_upgrades p
+    JOIN users u ON u.id = p.user_id
+    WHERE p.status = ?
+    ORDER BY p.created_at DESC
+  `).all(status);
+}
+
+export function setProUpgradeStatus(id, status) {
+  const allowed = ['pending', 'approved', 'rejected'];
+  if (!allowed.includes(status)) return null;
+  return db.prepare('UPDATE pro_upgrades SET status = ? WHERE id = ?').run(status, id);
 }
 
 /* ---------- Seeding ---------- */

@@ -71,6 +71,7 @@ The "forgot password" flow sends a reset link by email via Nodemailer. Without S
 - `SMTP_SECURE` — set `1` for SSL/TLS (implicit), `0` or omit for STARTTLS
 - `MAIL_FROM` — "From" header. Must be a **validated sender** in Brevo (Sender Identity), e.g. `Africa KNXION <komlavi.elom@outlook.fr>`
 - `CONTACT_NOTIFY_EMAIL` — recipient for the contact form notifications
+- `PRO_PAYPAL_URL` — your PayPal.me URL (e.g. `https://paypal.me/AfricaKnxion`). When set, the **PRO pricing** page shows a "Pay with PayPal.me" button. The PRO flow is manual: the member pays, notifies the admin (stored in `pro_upgrades` + email), and the admin activates the PRO badge from the dashboard.
 
 On Windows, the npm scripts run Node with `--use-system-ca` so that the OS certificate store (which may contain a local AV/proxy TLS root, e.g. Norton) is trusted during the SMTP handshake.
 

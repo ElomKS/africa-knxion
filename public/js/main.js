@@ -18,4 +18,20 @@
       setTimeout(function () { alert.remove(); }, 400);
     }, 4000);
   }
+
+  // Auto-submit selects that used inline onchange handlers.
+  document.querySelectorAll('select[data-submit]').forEach(function (select) {
+    select.addEventListener('change', function () {
+      this.form.submit();
+    });
+  });
+
+  // Confirm deletes that used inline onsubmit handlers.
+  document.querySelectorAll('form[data-confirm]').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+      if (!window.confirm(form.getAttribute('data-confirm'))) {
+        e.preventDefault();
+      }
+    });
+  });
 })();

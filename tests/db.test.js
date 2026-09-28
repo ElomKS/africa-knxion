@@ -14,6 +14,10 @@ import db, {
   createReview,
   getReviewsForProfessional,
   getAverageRating,
+  setOfferFeatured,
+  setUserFeatured,
+  searchOffers,
+  searchUsers,
 } from '../db.js';
 
 test('register user and authenticate', () => {
@@ -82,4 +86,49 @@ test('create reviews and compute rating', () => {
   const rating = getAverageRating(pro.id);
   assert.equal(rating.avg, 4);
   assert.equal(rating.count, 2);
+});
+
+test('promoted ordering: offer boost beats PRO, and both beat regular', () => {
+  const pro = registerUserWithAccount({ fullName: 'Feature A', username: `featA_${Date.now()}`, password: 'secret123' });
+  const regular = registerUserWithAccount({ fullName: 'Feature B', username: `featB_${Date.now()}`, password: 'secret123' });
+  const booster = registerUserWithAccount({ fullName: 'Offer Booster', username: `booster_${Date.now()}`, password: 'secret123' });
+
+  // 0 = offer promoted via PRO membership (promo_kind 2)
+  setUserFeatured(pro.id, true);
+  const proOffer = createOffer({ userId: pro.id, title: 'PRO offer', description: 'from a PRO member' }).lastInsertRowid;
+
+  // offer with an active boost (promo_kind 1)
+  const boostOffer = createOffer({ userId: booster.id, title: 'Boosted offer', description: 'boosted to top' }).lastInsertRowid;
+  setOfferFeatured(boostOffer, true);
+
+  // regular offer (no promotion at all)
+  createOffer({ userId: regular.id, title: 'Regular offer', description: 'not promoted' });
+
+  const offers = getAllOffers();
+  assert.equal(offers[0].id, Number(boostOffer));
+  assert.equal(offers[0].promo_kind, 1);
+  assert.equal(offers[0].featured, 1);
+
+  assert.equal(offers[1].id, Number(proOffer));
+  assert.equal(offers[1].promo_kind, 2);
+
+  // removing the boost keeps the order driven by PRO only
+  setOfferFeatured(boostOffer, false);
+  const after = getAllOffers();
+  assert.equal(after[0].id, Number(proOffer));
+  assert.equal(after[0].promo_kind, 2);
+
+  // regular users sort after promoted ones
+  assert.ok(after.findIndex((o) => o.title === 'Regular offer') > after.findIndex((o) => o.title === 'PRO offer'));
+
+  // search also promotes
+  const hit = searchOffers('offer');
+  assert.ok(hit);
+  assert.equal(hit[0].promo_kind, 2);
+
+  // user featured toggle drives searchUsers ordering
+  setUserFeatured(pro.id, true);
+  assert.equal(searchUsers('Feature')[0].id, pro.id);
+  setUserFeatured(pro.id, false);
+  assert.equal(searchUsers('Feature B')[0].id, regular.id);
 });

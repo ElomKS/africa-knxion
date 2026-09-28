@@ -65,7 +65,7 @@
             <% } %>
           </div>
 <% if (user && user.role === 'admin') { %>
-            <form action="/requests/<%= request.id %>/delete" method="POST" onsubmit="return confirm('Delete this request permanently?')">
+            <form action="/requests/<%= request.id %>/delete" method="POST" data-confirm="Delete this request permanently?">
               <button class="btn btn-danger" type="submit">Delete request</button>
             </form>
           <% } %>

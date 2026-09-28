@@ -66,6 +66,41 @@
       </div>
     </div>
 
+    <div class="panel" id="pro-requests">
+      <h2>PRO upgrade requests (<%= proUpgrades.length %>)</h2>
+      <% if (proUpgrades.length === 0) { %>
+        <p class="muted">No pending PRO requests.</p>
+      <% } else { %>
+        <table class="table">
+          <thead>
+            <tr><th>Member</th><th>Offers</th><th>Amount</th><th>Duration</th><th>Note</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            <% proUpgrades.forEach(function (p) { %>
+              <tr>
+                <td><a href="/profiles/<%= p.user_id %>"><%= p.full_name %></a><br><span class="muted"><%= p.email || '' %></span></td>
+                <td><%= p.offer_count %></td>
+                <td><strong>$<%= p.price %></strong></td>
+                <td><%= p.months %> mo</td>
+                <td class="muted"><%= p.note || '—' %></td>
+                <td>
+                  <div class="stack-row">
+                    <form action="/admin/pro-upgrades/<%= p.id %>/status" method="POST" class="inline-form">
+                      <button class="chip chip-featured active" type="submit" name="status" value="approved">Approve</button>
+                    </form>
+                    <form action="/admin/pro-upgrades/<%= p.id %>/status" method="POST" class="inline-form">
+                      <button class="chip" type="submit" name="status" value="rejected">Reject</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+        <p class="muted">Tip: to activate PRO after approval, use the ★ Make PRO button in the <a href="#members">Members</a> table.</p>
+      <% } %>
+    </div>
+
     <div class="panel">
       <h2>Admins (<%= admins.length %>)</h2>
       <% admins.forEach(function (a) { %>
@@ -92,10 +127,15 @@
                     <%= m.active === 0 ? 'Deactivated' : 'Active' %>
                   </button>
                 </form>
+                <form action="/admin/users/<%= m.id %>/featured" method="POST" class="inline-form">
+                  <button class="chip chip-featured <%= m.featured ? 'active' : '' %>" type="submit" name="featured" value="<%= m.featured ? '0' : '1' %>">
+                    <%= m.featured ? '★ PRO' : '☆ Make PRO' %>
+                  </button>
+                </form>
               </td>
               <td>
                 <form action="/admin/users/<%= m.id %>/role" method="POST" class="inline-form">
-                  <select name="role" onchange="this.form.submit()">
+                  <select name="role" data-submit>
                     <option value="member" <%= m.role === 'member' ? 'selected' : '' %>>member</option>
                     <option value="admin" <%= m.role === 'admin' ? 'selected' : '' %>>admin</option>
                   </select>
@@ -111,7 +151,7 @@
     </div>
 
     <div class="panel" id="offers">
-      <h2>Recent offers — activate / deactivate</h2>
+      <h2>Recent offers — boost, activate / deactivate</h2>
       <table class="table">
         <thead>
           <tr><th>Title</th><th>Provider</th><th>Location</th><th>Status</th><th>Actions</th></tr>
@@ -122,14 +162,23 @@
               <td><a href="/services/<%= o.id %>"><%= o.title %></a></td>
               <td><%= o.full_name %></td>
               <td><%= formatLocation(o) || '—' %></td>
-              <td><span class="chip <%= o.active === 0 ? '' : 'active' %>"><%= o.active === 0 ? 'Hidden' : 'Visible' %></span></td>
               <td>
+                <span class="chip <%= o.active === 0 ? '' : 'active' %>"><%= o.active === 0 ? 'Hidden' : 'Visible' %></span>
+                <% if (o.promo_kind == 1) { %><span class="chip chip-featured active">★ Featured</span><% } %>
+                <% if (o.promo_kind == 2) { %><span class="chip chip-featured active">★ PRO</span><% } %>
+              </td>
+              <td>
+                <form action="/admin/offers/<%= o.id %>/featured" method="POST" class="inline-form">
+                  <button class="btn btn-outline btn-sm" type="submit" name="featured" value="<%= o.featured ? '0' : '1' %>">
+                    <%= o.featured ? '★ Unboost' : '☆ Boost' %>
+                  </button>
+                </form>
                 <form action="/admin/offers/<%= o.id %>/active" method="POST" class="inline-form">
                   <button class="btn btn-outline btn-sm" type="submit" name="active" value="<%= o.active === 0 ? '1' : '0' %>">
                     <%= o.active === 0 ? 'Activate' : 'Deactivate' %>
                   </button>
                 </form>
-                <form action="/services/<%= o.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Delete this offer permanently?')">
+                <form action="/services/<%= o.id %>/delete" method="POST" class="inline-form" data-confirm="Delete this offer permanently?">
                   <button class="link link-danger btn-link" type="submit">Delete</button>
                 </form>
               </td>

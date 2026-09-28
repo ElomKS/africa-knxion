@@ -29,7 +29,7 @@
                 </span></td>
                 <td><%= r.comment || '—' %></td>
                 <td>
-                  <form action="/admin/reviews/<%= r.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Delete this review?')">
+                  <form action="/admin/reviews/<%= r.id %>/delete" method="POST" class="inline-form" data-confirm="Delete this review?">
                     <button class="link link-danger btn-link" type="submit">Delete</button>
                   </form>
                 </td>

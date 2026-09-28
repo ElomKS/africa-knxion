@@ -58,14 +58,20 @@ import {
   getOrCreateConversationFor,
   setUserRole,
   setUserActive,
+  setUserFeatured,
   setOfferActive,
+  setOfferFeatured,
   getAllReviews,
   deleteReview,
   getUsersByState,
   getCategoriesCount,
+  createProUpgrade,
+  getProUpgrades,
+  setProUpgradeStatus,
 } from './db.js';
 import { US_STATES, stateLabel, cityState, formatLocation, normalizeState } from './states.js';
-import { sendPasswordResetEmail, sendContactNotification, getMailMode, mailerSettings } from './mailer.js';
+import { sendPasswordResetEmail, sendContactNotification, sendProUpgradeNotification, getMailMode, mailerSettings } from './mailer.js';
+import { getProPriceForOfferCount, getProSavings, PRO_BASE_PRICE, PRO_ADDITIONAL_PRICE } from './pricing.js';
 
 export const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
@@ -192,11 +198,16 @@ app.get('/', (req, res) => {
   const offers = getAllOffers().filter((o) => o.active !== 0).slice(0, 6);
   const requests = getAllRequests().filter((r) => r.status === 'open').slice(0, 6);
   const members = getAllUsers().filter((u) => u.role !== 'admin' && u.active !== 0).slice(0, 6);
+  const stats = getStats();
+  const memberCount = getAllUsers().filter((u) => u.role !== 'admin' && u.active !== 0).length;
   res.render('index', {
     title: 'Connect with the African community',
     offers,
     requests,
     members,
+    statOffers: stats.activeOffers,
+    statRequests: stats.openRequests,
+    statMembers: memberCount,
   });
 });
 
@@ -627,7 +638,10 @@ app.get('/account', requireAuth, (req, res) => {
   const myBookings = getReservationsForClient(req.session.userId);
   const userok = req.query.userok === '1';
   const passok = req.query.passok === '1';
-  res.render('account', { title: 'My account', member: user, account, myOffers, incomingBookings, myBookings, userok, passok });
+  const proPrice = getProPriceForOfferCount(myOffers.length);
+  const proSavings = getProSavings(myOffers.length);
+  const alreadyPro = Boolean(user.featured);
+  res.render('account', { title: 'My account', member: user, account, myOffers, incomingBookings, myBookings, userok, passok, proPrice, proSavings, alreadyPro });
 });
 
 app.post('/account', requireAuth, (req, res) => {
@@ -699,7 +713,8 @@ app.get('/admin', requireAdmin, (req, res) => {
   const recentOffers = getAllOffers().slice(0, 10);
   const usersByState = getUsersByState();
   const categories = getCategoriesCount();
-  res.render('admin', { title: 'Admin dashboard', user, stats, members, admins, recentOffers, usersByState, categories });
+  const proUpgrades = getProUpgrades();
+  res.render('admin', { title: 'Admin dashboard', user, stats, members, admins, recentOffers, usersByState, categories, proUpgrades });
 });
 
 app.get('/admin/messages', requireAdmin, (req, res) => {
@@ -745,6 +760,22 @@ app.post('/admin/offers/:id/active', requireAdmin, (req, res) => {
   res.redirect('/admin#offers');
 });
 
+app.post('/admin/offers/:id/featured', requireAdmin, (req, res) => {
+  setOfferFeatured(Number(req.params.id), req.body.featured === '1');
+  res.redirect('/admin#offers');
+});
+
+app.post('/admin/users/:id/featured', requireAdmin, (req, res) => {
+  setUserFeatured(Number(req.params.id), req.body.featured === '1');
+  res.redirect('/admin');
+});
+
+app.post('/admin/pro-upgrades/:id/status', requireAdmin, (req, res) => {
+  const status = req.body.status === 'approved' ? 'approved' : 'rejected';
+  setProUpgradeStatus(Number(req.params.id), status);
+  res.redirect('/admin#pro-requests');
+});
+
 app.post('/admin/users/:id/delete', requireAdmin, (req, res) => {
   const id = Number(req.params.id);
   if (id !== req.session.userId) deleteUser(id);
@@ -755,6 +786,43 @@ app.get('/admin/users/:id/delete-confirm', requireAdmin, (req, res) => {
   const member = getUserById(Number(req.params.id));
   if (!member) return res.redirect('/admin');
   res.render('admin/delete-user', { title: 'Delete member', member });
+});
+
+/* ---------- Pricing ---------- */
+
+app.get('/pricing', (req, res) => {
+  const tiers = [1, 2, 3, 4, 5].map((count) => ({
+    count,
+    price: getProPriceForOfferCount(count),
+    savings: getProSavings(count),
+  }));
+  const paypalUrl = process.env.PRO_PAYPAL_URL || '';
+  const requestSent = req.query.sent === '1';
+  res.render('pricing', { title: 'PRO pricing', tiers, PRO_BASE_PRICE, PRO_ADDITIONAL_PRICE, paypalUrl, requestSent });
+});
+
+app.post('/pro/upgrade', requireAuth, rateLimit({ windowMs: 10 * 60 * 1000, max: 5 }), (req, res) => {
+  const user = currentUser(req);
+  const myOffers = getAllOffers().filter((o) => o.user_id === req.session.userId);
+  const offerCount = myOffers.length;
+  const price = getProPriceForOfferCount(offerCount);
+  const months = Math.max(1, Math.min(12, Number(req.body.months) || 1));
+  const note = String(req.body.note || '').trim();
+
+  createProUpgrade({ userId: req.session.userId, offerCount, price, months, note });
+  sendProUpgradeNotification({
+    memberId: req.session.userId,
+    memberName: user.full_name,
+    email: user.email,
+    offerCount,
+    price: price * months,
+    months,
+    note,
+  }).catch((err) => {
+    console.error('Failed to send PRO upgrade notification:', err);
+  });
+
+  res.redirect('/pricing?sent=1');
 });
 
 /* ---------- Contact ---------- */

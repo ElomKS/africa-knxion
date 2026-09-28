@@ -13,6 +13,7 @@
     </div>
     <form action="/services" method="GET" class="search-form">
       <input type="hidden" name="state" value="<%= selectedState %>">
+      <% if (selectedCity) { %><input type="hidden" name="city" value="<%= selectedCity %>"><% } %>
       <input type="text" name="q" value="<%= q %>" placeholder="Search offers&hellip;">
       <button class="btn btn-primary" type="submit">Search</button>
     </form>
@@ -24,7 +25,9 @@
   <div class="container">
     <div class="grid">
       <% offers.forEach(function (o) { %>
-        <a href="/services/<%= o.id %>" class="card">
+<a href="/services/<%= o.id %>" class="card <%= o.promo_kind ? 'card-featured' : '' %>">
+          <% if (o.promo_kind == 1) { %><span class="featured-badge">★ Featured</span><% } %>
+          <% if (o.promo_kind == 2) { %><span class="pro-badge">★ PRO</span><% } %>
           <span class="card-tag"><%= o.category || 'General' %></span>
           <h3><%= o.title %></h3>
           <p><%= o.description.slice(0, 90) %>&hellip;</p>

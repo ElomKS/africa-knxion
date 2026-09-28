@@ -3,8 +3,10 @@
 <section class="page-head">
   <div class="container">
     <a href="/services" class="link">&larr; Back to offers</a>
-    <h1><%= offer.title %></h1>
-    <p><span class="card-tag"><%= offer.category || 'General' %></span>
+<h1><%= offer.title %></h1>
+    <p><% if (offer.promo_kind == 1) { %><span class="featured-badge">★ Featured</span><% } %>
+       <% if (offer.promo_kind == 2) { %><span class="pro-badge">★ PRO</span><% } %>
+       <span class="card-tag"><%= offer.category || 'General' %></span>
        <span>&#128205; <%= formatLocation(offer) || 'US-wide' %></span></p>
   </div>
 </section>
@@ -45,7 +47,7 @@
             <a class="btn btn-outline w100" href="/messages/start/<%= offer.user_id %>">&#128172; Send a message</a>
           <% } %>
           <% if (user && user.role === 'admin') { %>
-            <form action="/services/<%= offer.id %>/delete" method="POST" onsubmit="return confirm('Delete this offer permanently?')">
+            <form action="/services/<%= offer.id %>/delete" method="POST" data-confirm="Delete this offer permanently?">
               <button class="btn btn-danger w100" type="submit">Delete offer</button>
             </form>
           <% } %>

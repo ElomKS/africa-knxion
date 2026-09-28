@@ -6,10 +6,11 @@
     <p>Find professionals across the community by name, profession or US state.</p>
     <form action="/directory" method="GET" class="search-form">
       <input type="hidden" name="state" value="<%= selectedState %>">
+      <% if (selectedCity) { %><input type="hidden" name="city" value="<%= selectedCity %>"><% } %>
       <input type="text" name="q" value="<%= q %>" placeholder="Search by name, profession or location&hellip;">
       <button class="btn btn-primary" type="submit">Search</button>
     </form>
-    <%- include('partials/state-filter', { selectedState, basePath: '/directory' }) %>
+    <%- include('partials/state-filter', { selectedState, selectedCity, cities, basePath: '/directory' }) %>
   </div>
 </section>
 
@@ -17,7 +18,8 @@
   <div class="container">
     <div class="grid">
       <% members.forEach(function (m) { %>
-        <a href="/profiles/<%= m.id %>" class="card card-member">
+        <a href="/profiles/<%= m.id %>" class="card card-member <%= m.featured ? 'card-featured' : '' %>">
+          <% if (m.featured) { %><span class="pro-badge">★ PRO</span><% } %>
           <div class="member-head">
             <span class="avatar avatar-lg"><%= m.full_name.charAt(0) %></span>
             <div>

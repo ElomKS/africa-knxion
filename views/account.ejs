@@ -50,6 +50,24 @@
       <div class="alert alert-success">Password updated successfully. You can now log in with your new password.</div>
     <% } %>
 
+    <div class="panel" id="pro">
+      <h3>
+        PRO status
+        <% if (alreadyPro) { %><span class="chip chip-featured active">★ PRO</span><% } %>
+      </h3>
+      <p class="muted">
+        <% if (myOffers.length === 0) { %>
+          You currently have no offers. Publish a service offer to unlock PRO pricing.
+        <% } else if (alreadyPro) { %>
+          You are a PRO member — all your <%= myOffers.length %> <%= myOffers.length === 1 ? 'offer' : 'offers' %> are featured.
+        <% } else { %>
+          With your <%= myOffers.length %> active <%= myOffers.length === 1 ? 'offer' : 'offers' %>, going PRO costs
+          <strong>$<%= proPrice %>/month</strong> (save $<%= proSavings %> on bundle pricing).
+        <% } %>
+      </p>
+      <a href="/pricing" class="btn btn-outline">See PRO pricing</a>
+    </div>
+
     <div class="panel" id="credentials">
       <h3>Login credentials</h3>
       <% if (account) { %>

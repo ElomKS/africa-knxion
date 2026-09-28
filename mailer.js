@@ -125,6 +125,38 @@ export async function sendContactNotification({ name, email, message }) {
   return send({ to, subject, text, html, label: 'Contact notification' });
 }
 
+export async function sendProUpgradeNotification({ memberId, memberName, email, offerCount, price, months, note }) {
+  const to = notifyTarget();
+  const subject = `PRO upgrade request – ${memberName}`;
+  const text =
+    `A member requested a PRO upgrade.\n\n` +
+    `Member: ${memberName} (id ${memberId})\n` +
+    `Email: ${email || 'not provided'}\n` +
+    `Active offers: ${offerCount}\n` +
+    `PRO price: $${price}/month\n` +
+    (months ? `Requested for: ${months} month(s)\n` : '') +
+    (note ? `Note: ${note}\n` : '') +
+    `\nCheck the admin dashboard to activate their PRO status.`;
+  const html =
+    `<p><strong>PRO upgrade request</strong></p>` +
+    `<p><strong>Member:</strong> ${memberName} (id ${memberId})<br>` +
+    `<strong>Email:</strong> ${email || 'not provided'}<br>` +
+    `<strong>Active offers:</strong> ${offerCount}<br>` +
+    `<strong>PRO price:</strong> $${price}/month</p>` +
+    (months ? `<p><strong>Requested for:</strong> ${months} month(s)</p>` : '') +
+    (note ? `<p><strong>Note:</strong> ${String(note).replace(/\n/g, '<br>')}</p>` : '') +
+    `<p>Check the <a href="${process.env.BASE_URL || ''}/admin">admin dashboard</a> to activate their PRO status.</p>`;
+
+  if (!to) {
+    console.log(
+      `\n[Mailer] (no CONTACT_NOTIFY_EMAIL/SMTP_USER set) PRO upgrade request from ${memberName} <${email}>:\n` +
+        `${text}\n`
+    );
+    return { delivered: false, mode: 'console' };
+  }
+  return send({ to, subject, text, html, label: 'PRO upgrade request' });
+}
+
 export const mailerSettings = () => ({
   host: process.env.SMTP_HOST,
   user: process.env.SMTP_USER,
