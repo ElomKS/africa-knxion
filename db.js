@@ -15,16 +15,6 @@ const db = new Database(path.join(dataDir, 'africa-knxion.db'));
 
 db.pragma('journal_mode = WAL');
 
-// Lightweight migrations for databases created before `featured` existed.
-function ensureColumn(table, column, definition) {
-  const cols = db.prepare(`PRAGMA table_info(${table})`).all();
-  if (!cols.some((c) => c.name === column)) {
-    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
-  }
-}
-ensureColumn('users', 'featured', 'INTEGER NOT NULL DEFAULT 0');
-ensureColumn('service_offers', 'featured', 'INTEGER NOT NULL DEFAULT 0');
-
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -207,6 +197,17 @@ for (const table of ['users', 'service_offers']) {
   try {
     if (!columnNames(table).includes('active')) {
       db.exec(`ALTER TABLE ${table} ADD COLUMN active INTEGER NOT NULL DEFAULT 1`);
+    }
+  } catch (err) {
+    // Ignore; already present on fresh schema.
+  }
+}
+
+// Migrations for monetization: 'featured' (0/1) on users and service_offers.
+for (const table of ['users', 'service_offers']) {
+  try {
+    if (!columnNames(table).includes('featured')) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN featured INTEGER NOT NULL DEFAULT 0`);
     }
   } catch (err) {
     // Ignore; already present on fresh schema.
